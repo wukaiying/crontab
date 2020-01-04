@@ -1,0 +1,11 @@
+{
+  "apiPort": 8070,
+  "apiReadTimeout": 5000,
+  "apiWriteTimeout": 5000,
+  "etcdEndPoints": [
+    "localhost:2379"
+  ],
+  "etcdDailTimeout": 5000,
+  "webRoot": "./webroot"
+}
+

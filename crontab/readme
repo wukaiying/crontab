@@ -1,0 +1,7 @@
+## etcd操作
+### open etcd
+G:\BaiduNetdiskDownload\etcd-v3.3.18-windows-amd64\etcd-v3.3.18-windows-amd64/etcd.ext
+
+### 数据查询
+G:\BaiduNetdiskDownload\etcd-v3.3.18-windows-amd64\etcd-v3.3.18-windows-amd64\etcdctl.exe get "/cron/jobs/" --prefix
+G:\BaiduNetdiskDownload\etcd-v3.3.18-windows-amd64\etcd-v3.3.18-windows-amd64\etcdctl.exe watch "/cron/kill/" --prefix
