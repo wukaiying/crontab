@@ -2,11 +2,12 @@ package master
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"strconv"
 	"time"
-	"wukaiying/crontab/crontab/conmmon"
+	"wukaiying/crontab/crontab/common"
 )
 
 type ApiServer struct {
@@ -21,10 +22,10 @@ var (
 //POST job={"name":"job1","command":"echo hello","cronExpr":"* * * * *"}
 func handleJobSave(resp http.ResponseWriter, req *http.Request) {
 	var(
-		err error
-		postJob string
-		job conmmon.Job
-		oldJob *conmmon.Job
+		err       error
+		postJob   []byte
+		job       common.Job
+		oldJob    *common.Job
 		respBytes []byte
 	)
 	//解析post表单
@@ -33,12 +34,12 @@ func handleJobSave(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	// 2. 取表单中的 job 字段
-	postJob = req.PostForm.Get("job")
+	//postJob = req.PostForm.Get("job")
 
 	//获取用户Post数据
-	//if postJob, err = ioutil.ReadAll(req.Body); err != nil {
-	//	goto ERR
-	//}
+	if postJob, err = ioutil.ReadAll(req.Body); err != nil {
+		goto ERR
+	}
 
 	//将用户传入转化为Job结构体
 	if err = json.Unmarshal([]byte(postJob), &job); err != nil {
@@ -51,12 +52,12 @@ func handleJobSave(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	//返回应答给用户
-	if respBytes, err = conmmon.BuildResponse(0, "sava job success", oldJob); err == nil {
+	if respBytes, err = common.BuildResponse(0, "sava job success", oldJob); err == nil {
 		resp.Write(respBytes)
 	}
 	return
 ERR:
-	if respBytes, err = conmmon.BuildResponse(-1, err.Error(), oldJob); err == nil {
+	if respBytes, err = common.BuildResponse(-1, err.Error(), oldJob); err == nil {
 		resp.Write(respBytes)
 	}
 }
@@ -67,7 +68,7 @@ func handleJobDelete(resp http.ResponseWriter, req *http.Request) {
 	var(
 		err error
 		name string
-		oldJob *conmmon.Job
+		oldJob *common.Job
 		respBytes []byte
 	)
 	//解析post表单
@@ -76,7 +77,7 @@ func handleJobDelete(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	//获取用户Post数据
-	name = req.PostForm.Get("name")
+	name = req.FormValue("name")
 
 	//将Job从etcd中删除
 	if oldJob, err = G_jobManager.DeleteJob(name); err != nil {
@@ -84,12 +85,12 @@ func handleJobDelete(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	//返回应答给用户
-	if respBytes, err = conmmon.BuildResponse(0, "delete job success", oldJob); err == nil {
+	if respBytes, err = common.BuildResponse(0, "delete job success", oldJob); err == nil {
 		resp.Write(respBytes)
 	}
 	return
 ERR:
-	if respBytes, err = conmmon.BuildResponse(-1, err.Error(), oldJob); err == nil {
+	if respBytes, err = common.BuildResponse(-1, err.Error(), oldJob); err == nil {
 		resp.Write(respBytes)
 	}
 }
@@ -97,7 +98,7 @@ ERR:
 func handleJobList(resp http.ResponseWriter, req *http.Request) {
 	var(
 		err error
-		jobList []*conmmon.Job
+		jobList []*common.Job
 		respBytes []byte
 	)
 
@@ -107,12 +108,12 @@ func handleJobList(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	//返回应答给用户
-	if respBytes, err = conmmon.BuildResponse(0, "list job success", jobList); err == nil {
+	if respBytes, err = common.BuildResponse(0, "list job success", jobList); err == nil {
 		resp.Write(respBytes)
 	}
 	return
 ERR:
-	if respBytes, err = conmmon.BuildResponse(-1, err.Error(), jobList); err == nil {
+	if respBytes, err = common.BuildResponse(-1, err.Error(), jobList); err == nil {
 		resp.Write(respBytes)
 	}
 }
@@ -140,12 +141,12 @@ func handleJobKill(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	//返回应答给用户
-	if respBytes, err = conmmon.BuildResponse(0, "kill job success", nil); err == nil {
+	if respBytes, err = common.BuildResponse(0, "kill job success", nil); err == nil {
 		resp.Write(respBytes)
 	}
 	return
 ERR:
-	if respBytes, err = conmmon.BuildResponse(-1, err.Error(), nil); err == nil {
+	if respBytes, err = common.BuildResponse(-1, err.Error(), nil); err == nil {
 		resp.Write(respBytes)
 	}
 }

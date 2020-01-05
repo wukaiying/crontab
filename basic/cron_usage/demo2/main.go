@@ -13,73 +13,77 @@ https://blog.csdn.net/u011327801/article/details/90376402
  */
 
 //定义任务
+// 调度多个cron 任务
+
+// 定义任务结果体
 type CronJob struct {
-	expr 			*cronexpr.Expression					//描述定时任务执行策略
-	nextTime		time.Time
+	expr *cronexpr.Expression
+	nextTime time.Time
 }
 
-func main(){
+func main() {
+	// 需要一个 协程调度，定时检查所有Cron 任务，谁过期就执行谁
 	var (
 		cronJob *CronJob
-		now		time.Time
-		expr 	*cronexpr.Expression
-		err		error
-		scheduleTable		map[string]*CronJob						//定时任务注册表
+		expr *cronexpr.Expression
+		now time.Time
+		scheduleTable map[string] *CronJob //key：任务名字
 	)
+
+	scheduleTable = make(map[string]*CronJob)
+
+	// 当前时间
 	now = time.Now()
-	scheduleTable = make(map[string]*CronJob)						//map需要使用make事先进行创建
-	//定义第一个任务
-	if expr, err = cronexpr.Parse("*/5 * * * * * *"); err != nil {
-		fmt.Println(err)
-	}
+
+	// 定义第一个Cronjob
+	expr = cronexpr.MustParse("*/5 * * * * * *")
 	cronJob = &CronJob{
-		expr:     expr,
+		expr: expr,
 		nextTime: expr.Next(now),
 	}
-	//注册任务到scheduleTable
+
+	// 任务注册到调度表
 	scheduleTable["job1"] = cronJob
 
-	//定义第二个任务
-	if expr, err = cronexpr.Parse("*/8 * * * * * *"); err != nil {
-		fmt.Println(err)
-	}
+	// 定义第二个cronjob
+	expr = cronexpr.MustParse("*/8 * * * * * *")
 	cronJob = &CronJob{
-		expr:     expr,
+		expr : expr,
 		nextTime: expr.Next(now),
 	}
+	// 任务注册到调度表
 	scheduleTable["job2"] = cronJob
 
-	//启动协程遍历map执行定时调度任务
+	// 启动调度协程
 	go func() {
 		var (
-			now time.Time
 			jobName string
-			jobCron *CronJob
+			cronJob *CronJob
+			now time.Time
 		)
+
+		// 定时检查任务调度表是否有到期的
 		for {
 			now = time.Now()
-			for jobName, jobCron = range scheduleTable {
-				if jobCron.nextTime.Before(now) && jobCron.nextTime.Equal(now) {					//下次调度时间已经小于等于当前时间，说明需要进行调度
+			// 循环调度任务列表
+			for jobName, cronJob = range scheduleTable {
+				// 判断是否过期（如果下次调度时间等于当前时间，说明已经过期了）
+				if cronJob.nextTime.Before(now) || cronJob.nextTime.Equal(now) {
+					// 启动一个协程，执行这个任务
 					go func(jobName string) {
-						fmt.Println("正在执行：" + jobName)														//打印jobName
+						fmt.Println("执行：", jobName)
 					}(jobName)
-
-					//还要更新下次调度时间
-					jobCron.nextTime = jobCron.expr.Next(now)
+					// 计算下一次调度时间
+					cronJob.nextTime = cronJob.expr.Next(now)
 					fmt.Println(jobName, "下次执行时间：", cronJob.nextTime)
 				}
 			}
-
-			//为for 循环添加一个延时时间，每100ms执行一次，等价于time.sleep(100*time.Millisecond)
+			// 睡眠100 毫秒（不让它占用过多cpu）
 			select {
-			case <- time.NewTimer(100 * time.Millisecond).C:
+			case <- time.NewTimer(100 * time.Millisecond).C: //将在100 毫秒可读，返回
 			}
 		}
 	}()
-
-	time.Sleep(100 *time.Second)								//让主线程等待
-
-
-
+	time.Sleep(100 *time.Second)
 
 }

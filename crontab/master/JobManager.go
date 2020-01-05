@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+	"wukaiying/crontab/crontab/common"
+
 	"github.com/golang/glog"
 	"go.etcd.io/etcd/clientv3"
-	"time"
-	"wukaiying/crontab/crontab/conmmon"
 )
 
 /**
@@ -60,16 +61,16 @@ func InitJobManager() (err error) {
 
 //save Job to etcd,保存格式为/cron/jobs/名字 -> Job结构体的 json格式
 //如果是覆盖则返回被覆盖的job,新增的话就正常添加
-func (jobManager *JobManager)SaveJob(job *conmmon.Job) (oldJob *conmmon.Job, err error)  {
+func (jobManager *JobManager)SaveJob(job *common.Job) (oldJob *common.Job, err error)  {
 
 	var(
-		jobKey string
-		jobValue []byte
+		jobKey      string
+		jobValue    []byte
 		putResponse *clientv3.PutResponse
-		oldJobObj conmmon.Job
+		oldJobObj   common.Job
 	)
 
-	jobKey = conmmon.JOB_SAVE_DIR + job.Name
+	jobKey = common.JOB_SAVE_DIR + job.Name
 	if jobValue, err = json.Marshal(job); err!= nil {
 		return
 	}
@@ -95,15 +96,15 @@ func (jobManager *JobManager)SaveJob(job *conmmon.Job) (oldJob *conmmon.Job, err
 }
 
 
-func (jobManager *JobManager)DeleteJob(name string) (oldJob *conmmon.Job, err error)  {
+func (jobManager *JobManager)DeleteJob(name string) (oldJob *common.Job, err error)  {
 	var (
-		jobKey string
+		jobKey     string
 		deleteResp *clientv3.DeleteResponse
-		oldJobObj conmmon.Job
+		oldJobObj  common.Job
 	)
 
 	//删除etcd中的key
-	jobKey = conmmon.JOB_SAVE_DIR + name
+	jobKey = common.JOB_SAVE_DIR + name
 	if deleteResp, err = jobManager.kv.Delete(context.TODO(), jobKey, clientv3.WithPrevKV()); err != nil {
 		return
 	}
@@ -117,23 +118,23 @@ func (jobManager *JobManager)DeleteJob(name string) (oldJob *conmmon.Job, err er
 	return
 }
 
-func (jobManager *JobManager)ListJob() (jobList []*conmmon.Job, err error)  {
+func (jobManager *JobManager)ListJob() (jobList []*common.Job, err error)  {
 	var (
 		keyDir string
 		listResp *clientv3.GetResponse
-		jobObj *conmmon.Job
-		jobObjList []*conmmon.Job
+		jobObj *common.Job
+		jobObjList []*common.Job
 	)
 
 	//list 以keyDir为前缀的所有job
-	keyDir = conmmon.JOB_SAVE_DIR
+	keyDir = common.JOB_SAVE_DIR
 	if listResp, err = jobManager.kv.Get(context.TODO(), keyDir, clientv3.WithPrefix()); err != nil {
 		return
 	}
 	//返回查询到的
-	jobObjList = make([]*conmmon.Job, 0)							//这样保证，如果没有Job返回的结果不会为空，而是一个空数组
+	jobObjList = make([]*common.Job, 0) //这样保证，如果没有Job返回的结果不会为空，而是一个空数组
 	for _, item := range listResp.Kvs {
-		jobObj = &conmmon.Job{}
+		jobObj = &common.Job{}
 		if err = json.Unmarshal(item.Value, jobObj); err != nil {
 			err = nil										//容忍这次错误
 			continue
@@ -156,7 +157,7 @@ func (jobManager *JobManager)KillJob(name string) (err error) {
 		leaseID clientv3.LeaseID
 	)
 
-	jobKey = conmmon.JOB_KILL_DIR + name
+	jobKey = common.JOB_KILL_DIR + name
 
 	//创建租约
 	if leaseGrantResp,err = jobManager.lease.Grant(context.TODO(), 1); err != nil {

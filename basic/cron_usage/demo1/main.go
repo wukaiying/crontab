@@ -6,6 +6,14 @@ import (
 	"time"
 )
 
+/**
+*
+cronexpr很简单，
+就是传入(* * * * * *)然后解析得到expr,
+然后通过expr.Next()得到下次运行时间，
+然后通过time.AfterFunc(nextTime.Sub(now))计算时间差
+然后执行你的自己的任务
+**/
 func main()  {
 	var (
 		expr *cronexpr.Expression
