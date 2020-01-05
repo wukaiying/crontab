@@ -1,4 +1,4 @@
-package conmmon
+package common
 
 import (
 	"encoding/json"
@@ -24,6 +24,8 @@ type JobSchedulePlan struct {
 	Expr *cronexpr.Expression		//任务调度表达式
 	NextTime time.Time				//下次调度时间
 }
+
+
 
 //返回应答结构体
 type Response struct {
